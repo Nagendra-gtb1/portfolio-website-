@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/(.*\\.(js|css|png|jpg|jpeg|webp|svg|ico|json))",
-      "destination": "/$1"
+      "destination": "/dist/client/$1"
     },
     {
       "source": "/api/(.*)",
