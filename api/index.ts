@@ -2,13 +2,16 @@ export const config = {
   runtime: "edge",
 };
 
-declare module "../dist/server/server.js" {
-  const server: any;
-  export default server;
+let server: any;
+
+async function getServer() {
+  if (server) return server;
+  const mod = await import("../dist/server/server.js");
+  server = mod.default ?? mod;
+  return server;
 }
 
-import server from "../dist/server/server.js";
-
 export default async function handleRequest(request: Request) {
-  return server.fetch(request, {}, {});
+  const serverModule = await getServer();
+  return serverModule.fetch(request, {}, {});
 }
