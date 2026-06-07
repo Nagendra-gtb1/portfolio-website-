@@ -1,5 +1,5 @@
 export const config = {
-  runtime: "edge",
+  runtime: "nodejs18.x",
 };
 
 let server: any;
