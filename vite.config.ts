@@ -5,6 +5,7 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 
 export default defineConfig({
+  publicDir: "public",
   server: {
     host: "0.0.0.0",
     port: 5173,
@@ -15,6 +16,7 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 2000,
+    outDir: "dist/client",
   },
   plugins: [
     tanstackStart({
