@@ -1,11 +1,16 @@
 import type { IncomingMessage, ServerResponse } from "http";
 
-let server: any;
+type ServerModule = {
+  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response>;
+};
+
+let server: ServerModule | undefined;
 
 async function getServer() {
   if (server) return server;
-  const mod = await import("../dist/server/server.js");
-  server = mod.default ?? mod;
+  const serverPath = new URL("../dist/server/server.js", import.meta.url).href;
+  const mod = await import(serverPath);
+  server = (mod.default ?? mod) as ServerModule;
   return server;
 }
 
@@ -21,13 +26,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const request = new Request(getRequestUrl(req), {
     method: req.method,
     headers: req.headers as HeadersInit,
-    body: req.method === "GET" || req.method === "HEAD" ? undefined : req,
+    body:
+      req.method === "GET" || req.method === "HEAD"
+        ? undefined
+        : (req as unknown as BodyInit),
   });
 
   const response = await serverModule.fetch(request, {}, {});
 
   res.statusCode = response.status;
-  response.headers.forEach((value, name) => {
+  response.headers.forEach((value: string, name: string) => {
     res.setHeader(name, value);
   });
 
