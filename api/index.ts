@@ -8,7 +8,7 @@ let server: ServerModule | undefined;
 
 async function getServer() {
   if (server) return server;
-  const serverPath = new URL("../dist/server/server.js", import.meta.url).href;
+  const serverPath = new URL("../dist/client/server/server.js", import.meta.url).href;
   const mod = await import(serverPath);
   server = (mod.default ?? mod) as ServerModule;
   return server;
@@ -21,15 +21,36 @@ function getRequestUrl(req: IncomingMessage) {
   return `${protocol}://${host}${req.url ?? "/"}`;
 }
 
+function normalizeHeaders(headers: IncomingMessage["headers"]): HeadersInit {
+  const normalized: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(headers)) {
+    if (value === undefined) continue;
+    normalized[key] = Array.isArray(value) ? value.join(",") : value;
+  }
+
+  return normalized;
+}
+
+async function readRequestBody(req: IncomingMessage): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  }
+
+  return Buffer.concat(chunks);
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   const serverModule = await getServer();
   const request = new Request(getRequestUrl(req), {
-    method: req.method,
-    headers: req.headers as HeadersInit,
+    method: req.method ?? "GET",
+    headers: normalizeHeaders(req.headers),
     body:
       req.method === "GET" || req.method === "HEAD"
         ? undefined
-        : (req as unknown as BodyInit),
+        : await readRequestBody(req),
   });
 
   const response = await serverModule.fetch(request, {}, {});
