@@ -9,9 +9,13 @@ let server: ServerModule | undefined;
 async function getServer() {
   if (server) return server;
   const serverPath = new URL("../dist/client/server/server.js", import.meta.url).href;
-  const mod = await import(serverPath);
-  server = (mod.default ?? mod) as ServerModule;
-  return server;
+  try {
+    const mod = await import(serverPath);
+    server = (mod.default ?? mod) as ServerModule;
+    return server;
+  } catch (error) {
+    throw new Error(`Failed to import server bundle from ${serverPath}: ${error}`);
+  }
 }
 
 function getRequestUrl(req: IncomingMessage) {
