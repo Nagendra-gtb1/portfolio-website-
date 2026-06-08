@@ -44,7 +44,8 @@ async function getRequestBody(req: IncomingMessage): Promise<BodyInit | undefine
     chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
   }
 
-  return Buffer.concat(chunks) as BodyInit;
+  const buffer = Buffer.concat(chunks);
+  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
