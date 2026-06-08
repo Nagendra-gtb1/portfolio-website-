@@ -36,14 +36,15 @@ function normalizeHeaders(headers: IncomingMessage["headers"]): HeadersInit {
   return normalized;
 }
 
-async function readRequestBody(req: IncomingMessage): Promise<Uint8Array> {
-  const chunks: Uint8Array[] = [];
+async function getRequestBody(req: IncomingMessage): Promise<BodyInit | undefined> {
+  if (req.method === "GET" || req.method === "HEAD") return undefined;
 
+  const chunks: Uint8Array[] = [];
   for await (const chunk of req) {
     chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
   }
 
-  return Buffer.concat(chunks);
+  return Buffer.concat(chunks) as BodyInit;
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
@@ -51,10 +52,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const request = new Request(getRequestUrl(req), {
     method: req.method ?? "GET",
     headers: normalizeHeaders(req.headers),
-    body:
-      req.method === "GET" || req.method === "HEAD"
-        ? undefined
-        : await readRequestBody(req),
+    body: await getRequestBody(req),
   });
 
   const response = await serverModule.fetch(request, {}, {});
